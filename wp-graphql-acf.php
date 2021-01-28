@@ -27,6 +27,12 @@ require_once( __DIR__ . '/vendor/autoload.php' );
  */
 const WPGRAPHQL_REQUIRED_MIN_VERSION = '0.4.0';
 
+function dd(...$args) {
+	foreach ($args as $arg) {
+		error_log(var_export($arg, true));
+	}
+}
+
 /**
  * Initialize the plugin
  *
