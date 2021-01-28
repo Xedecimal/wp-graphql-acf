@@ -249,13 +249,11 @@ class Config {
 			register_graphql_object_type($post_type_object->graphql_single_name . 'FieldGroups', [
 				'description' => 'Field Groups',
 				'fields' => [
-					// @TODO: Here's where we can put all the general group arguments.
-					'something' => [
+					'fieldGroupName' => [
 						'type' => 'String',
-						'description' => 'testing',
-						'resolve' => function ($root) {
-							dd($root);
-							return 'string';
+						'description' => 'Name of this field group',
+						'resolve' => function (FieldGroup $root) {
+							return $root->fields['fieldGroupName']();
 						}
 					]
 				],

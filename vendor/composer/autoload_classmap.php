@@ -6,7 +6,11 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'WPGraphQL\\ACF\\ACF' => $baseDir . '/src/class-acf.php',
     'WPGraphQL\\ACF\\ACF_Settings' => $baseDir . '/src/class-acfsettings.php',
     'WPGraphQL\\ACF\\Config' => $baseDir . '/src/class-config.php',
+    'WPGraphQL\\ACF\\FieldGroup' => $baseDir . '/src/FieldGroupModel.php',
+    'WPGraphQL\\ACF\\FieldGroupConnectionResolver' => $baseDir . '/src/FieldGroupConnectionResolver.php',
+    'WPGraphQL\\ACF\\FieldGroupLoader' => $baseDir . '/src/FieldGroupLoader.php',
 );

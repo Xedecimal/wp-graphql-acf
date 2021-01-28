@@ -2,6 +2,7 @@
 
 namespace WPGraphQL\ACF;
 
+use GraphQLRelay\Relay;
 use WPGraphQL\Model\Model;
 use WPGraphQL\WooCommerce\Model\Product;
 
@@ -32,12 +33,12 @@ use WPGraphQL\WooCommerce\Model\Product;
  */
 class FieldGroup extends Model {
 //
-//	/**
-//	 * Stores the incoming WP_Comment object to be modeled
-//	 *
-//	 * @var \WP_Comment $data
-//	 */
-//	protected $data;
+	/**
+	 * Stores the incoming WP_Comment object to be modeled
+	 *
+	 * @var Product $data
+	 */
+	protected $data;
 //
 //	/**
 //	 * Comment constructor.
@@ -113,78 +114,75 @@ class FieldGroup extends Model {
 //	 * @return void
 //	 */
 	protected function init() {
-//
-//		if ( empty( $this->fields ) ) {
-//
-//			$this->fields = [
-//				'id'                 => function() {
-//					return ! empty( $this->data->comment_ID ) ? Relay::toGlobalId( 'comment', $this->data->comment_ID ) : null;
-//				},
-//				'commentId'          => function() {
-//					return ! empty( $this->data->comment_ID ) ? absint( $this->data->comment_ID ) : 0;
-//				},
-//				'databaseId'         => function() {
-//					return ! empty( $this->data->comment_ID ) ? $this->data->comment_ID : 0;
-//				},
-//				'commentAuthorEmail' => function() {
-//					return ! empty( $this->data->comment_author_email ) ? $this->data->comment_author_email : 0;
-//				},
-//				'comment_ID'         => function() {
-//					return ! empty( $this->data->comment_ID ) ? absint( $this->data->comment_ID ) : 0;
-//				},
-//				'comment_post_ID'    => function() {
-//					return ! empty( $this->data->comment_post_ID ) ? absint( $this->data->comment_post_ID ) : null;
-//				},
-//				'comment_parent_id'  => function() {
-//					return ! empty( $this->data->comment_parent ) ? absint( $this->data->comment_parent ) : 0;
-//				},
-//				'parentDatabaseId'   => function() {
-//					return ! empty( $this->data->comment_parent ) ? absint( $this->data->comment_parent ) : 0;
-//				},
-//				'parentId'           => function() {
-//					return ! empty( $this->comment_parent_id ) ? Relay::toGlobalId( 'comment', $this->data->comment_parent ) : null;
-//				},
-//				'comment_author'     => function() {
-//					return ! empty( $this->data->comment_author ) ? absint( $this->data->comment_author ) : null;
-//				},
-//				'comment_author_url' => function() {
-//					return ! empty( $this->data->comment_author_url ) ? absint( $this->data->comment_author_url ) : null;
-//				},
-//				'authorIp'           => function() {
-//					return ! empty( $this->data->comment_author_IP ) ? $this->data->comment_author_IP : null;
-//				},
-//				'date'               => function() {
-//					return ! empty( $this->data->comment_date ) ? $this->data->comment_date : null;
-//				},
-//				'dateGmt'            => function() {
-//					return ! empty( $this->data->comment_date_gmt ) ? $this->data->comment_date_gmt : null;
-//				},
-//				'contentRaw'         => function() {
-//					return ! empty( $this->data->comment_content ) ? $this->data->comment_content : null;
-//				},
-//				'contentRendered'    => function() {
-//					$content = ! empty( $this->data->comment_content ) ? $this->data->comment_content : null;
-//
-//					return $this->html_entity_decode( apply_filters( 'comment_text', $content ), 'contentRendered', false );
-//				},
-//				'karma'              => function() {
-//					return ! empty( $this->data->comment_karma ) ? $this->data->comment_karma : null;
-//				},
-//				'approved'           => function() {
-//					return ! empty( $this->data->comment_approved ) ? $this->data->comment_approved : null;
-//				},
-//				'agent'              => function() {
-//					return ! empty( $this->data->comment_agent ) ? $this->data->comment_agent : null;
-//				},
-//				'type'               => function() {
-//					return ! empty( $this->data->comment_type ) ? $this->data->comment_type : null;
-//				},
-//				'userId'             => function() {
-//					return isset( $this->data->user_id ) ? absint( $this->data->user_id ) : null;
-//				},
-//			];
-//
+		if ( empty( $this->fields ) ) {
+
+			$this->fields = [
+				'id'                 => function() {
+					return ! empty( $this->data->ID ) ? Relay::toGlobalId( 'comment', $this->data->ID ) : null;
+				},
+				'fieldGroupName' => function() {
+					return unserialize($this->data->post_content)['graphql_field_name'];
+				},
+				'databaseId'         => function() {
+					return ! empty( $this->data->comment_ID ) ? $this->data->comment_ID : 0;
+				},
+				'commentAuthorEmail' => function() {
+					return ! empty( $this->data->comment_author_email ) ? $this->data->comment_author_email : 0;
+				},
+				'comment_ID'         => function() {
+					return ! empty( $this->data->comment_ID ) ? absint( $this->data->comment_ID ) : 0;
+				},
+				'comment_post_ID'    => function() {
+					return ! empty( $this->data->comment_post_ID ) ? absint( $this->data->comment_post_ID ) : null;
+				},
+				'comment_parent_id'  => function() {
+					return ! empty( $this->data->comment_parent ) ? absint( $this->data->comment_parent ) : 0;
+				},
+				'parentDatabaseId'   => function() {
+					return ! empty( $this->data->comment_parent ) ? absint( $this->data->comment_parent ) : 0;
+				},
+				'parentId'           => function() {
+					return ! empty( $this->comment_parent_id ) ? Relay::toGlobalId( 'comment', $this->data->comment_parent ) : null;
+				},
+				'comment_author'     => function() {
+					return ! empty( $this->data->comment_author ) ? absint( $this->data->comment_author ) : null;
+				},
+				'comment_author_url' => function() {
+					return ! empty( $this->data->comment_author_url ) ? absint( $this->data->comment_author_url ) : null;
+				},
+				'authorIp'           => function() {
+					return ! empty( $this->data->comment_author_IP ) ? $this->data->comment_author_IP : null;
+				},
+				'date'               => function() {
+					return ! empty( $this->data->comment_date ) ? $this->data->comment_date : null;
+				},
+				'dateGmt'            => function() {
+					return ! empty( $this->data->comment_date_gmt ) ? $this->data->comment_date_gmt : null;
+				},
+				'contentRaw'         => function() {
+					return ! empty( $this->data->comment_content ) ? $this->data->comment_content : null;
+				},
+				'contentRendered'    => function() {
+					$content = ! empty( $this->data->comment_content ) ? $this->data->comment_content : null;
+
+					return $this->html_entity_decode( apply_filters( 'comment_text', $content ), 'contentRendered', false );
+				},
+				'karma'              => function() {
+					return ! empty( $this->data->comment_karma ) ? $this->data->comment_karma : null;
+				},
+				'approved'           => function() {
+					return ! empty( $this->data->comment_approved ) ? $this->data->comment_approved : null;
+				},
+				'agent'              => function() {
+					return ! empty( $this->data->comment_agent ) ? $this->data->comment_agent : null;
+				},
+				'type'               => function() {
+					return ! empty( $this->data->comment_type ) ? $this->data->comment_type : null;
+				},
+				'userId'             => function() {
+					return isset( $this->data->user_id ) ? absint( $this->data->user_id ) : null;
+				},
+			];
 		}
-//
-//	}
+	}
 }

@@ -21,9 +21,13 @@ class ComposerStaticInit0d1c0770bd52413713b6ce542771fda1
     );
 
     public static $classMap = array (
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'WPGraphQL\\ACF\\ACF' => __DIR__ . '/../..' . '/src/class-acf.php',
         'WPGraphQL\\ACF\\ACF_Settings' => __DIR__ . '/../..' . '/src/class-acfsettings.php',
         'WPGraphQL\\ACF\\Config' => __DIR__ . '/../..' . '/src/class-config.php',
+        'WPGraphQL\\ACF\\FieldGroup' => __DIR__ . '/../..' . '/src/FieldGroupModel.php',
+        'WPGraphQL\\ACF\\FieldGroupConnectionResolver' => __DIR__ . '/../..' . '/src/FieldGroupConnectionResolver.php',
+        'WPGraphQL\\ACF\\FieldGroupLoader' => __DIR__ . '/../..' . '/src/FieldGroupLoader.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
