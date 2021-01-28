@@ -25,8 +25,7 @@ final class ACF {
 	 *
 	 * @return ACF
 	 */
-	public static function instance() {
-
+	public static function instance(): ACF {
 		if ( ! isset( self::$instance ) && ! ( self::$instance instanceof ACF ) ) {
 			self::$instance = new ACF();
 			self::$instance->setup_constants();
@@ -115,7 +114,6 @@ final class ACF {
 	 * @return void
 	 */
 	private function includes() {
-
 		// Autoload Required Classes.
 	}
 
@@ -124,14 +122,18 @@ final class ACF {
 	 * cycle
 	 */
 	private function actions() {
-
 	}
 
 	/**
 	 * Setup filters
 	 */
 	private function filters() {
+		add_filter('graphql_data_loaders', array(__CLASS__, 'graphql_data_loaders'), 10, 2);
+	}
 
+	public static function graphql_data_loaders($loaders, $context) {
+		$loader = new FieldGroupLoader($context);
+		return array_merge($loaders, [ 'fieldGroups' => &$loader ]);
 	}
 
 	/**
