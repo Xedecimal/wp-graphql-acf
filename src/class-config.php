@@ -7,6 +7,7 @@
 
 namespace WPGraphQL\ACF;
 
+use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\DataSource;
@@ -16,12 +17,16 @@ use WPGraphQL\Model\MenuItem;
 use WPGraphQL\Model\Post;
 use WPGraphQL\Model\Term;
 use WPGraphQL\Model\User;
+use WPGraphQL\Registry\TypeRegistry;
+use WPGraphQL\WooCommerce\Model\Product;
 
 /**
  * Config class.
  */
 class Config {
-
+	/**
+	 * @var TypeRegistry
+	 */
 	protected $type_registry;
 
 	/**
@@ -32,14 +37,41 @@ class Config {
 	/**
 	 * Initialize WPGraphQL to ACF
 	 *
-	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry Instance of the WPGraphQL TypeRegistry
+	 * @param TypeRegistry $type_registry Instance of the WPGraphQL TypeRegistry
+	 * @throws Exception
 	 */
-	public function init( \WPGraphQL\Registry\TypeRegistry $type_registry ) {
+	public function init( TypeRegistry $type_registry ) {
 
 		/**
 		 * Set the TypeRegistry
 		 */
 		$this->type_registry = $type_registry;
+
+		$this->type_registry->register_object_type('Location', [
+			'fields' => [
+				'param' => [
+					'type'        => 'String',
+					'description' => __( 'Parameter base of condition', 'wp-graphql-acf' ),
+					'resolve'     => function( $root ) {
+						return $root[0][0]['param'];
+					},
+				],
+				'operator' => [
+					'type'        => 'String',
+					'description' => __( 'comparison between parameter and value', 'wp-graphql-acf' ),
+					'resolve'     => function( $root ) {
+						return $root[0][0]['operator'];
+					},
+				],
+				'value' => [
+					'type'        => 'String',
+					'description' => __( 'operator\'s value', 'wp-graphql-acf' ),
+					'resolve'     => function( $root ) {
+						return $root[0][0]['value'];
+					},
+				],
+			],
+		] );
 
 		/**
 		 * Add ACF Fields to GraphQL Types
@@ -192,14 +224,13 @@ class Config {
 		 * Loop over the post types exposed to GraphQL
 		 */
 		foreach ( $graphql_post_types as $post_type ) {
-
 			/**
 			 * Get the field groups associated with the post type
 			 */
 			$field_groups = acf_get_field_groups(
-				[
-					'post_type' => $post_type,
-				]
+//				[
+//					'post_type' => $post_type
+//				]
 			);
 
 			/**
@@ -213,6 +244,25 @@ class Config {
 			 * Get the post_type_object
 			 */
 			$post_type_object = get_post_type_object( $post_type );
+
+			// Create a collection for all field groups
+			register_graphql_object_type($post_type_object->graphql_single_name . 'FieldGroups', [
+				'description' => 'Field Groups',
+				'fields' => [
+					// @TODO: Here's where we can put all the general group arguments.
+					'something' => [
+						'type' => 'String',
+						'description' => 'testing',
+						'resolve' => function ($root) {
+							dd($root);
+							return 'string';
+						}
+					]
+				],
+				'resolve' => function($root) {
+					return $root;
+				}
+			]);
 
 			/**
 			 * Loop over the field groups for this post type
@@ -233,10 +283,27 @@ class Config {
 					}
 				];
 
-				$this->register_graphql_field( $post_type_object->graphql_single_name, $field_name, $config );
+				$this->register_graphql_field( $post_type_object->graphql_single_name . 'FieldGroups', $field_name, $config );
 			}
-		}
 
+			// var_dump($config);
+			register_graphql_connection([
+				'fromType' => $post_type_object->graphql_single_name,
+				'toType' => $post_type_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'fieldGroups',
+				'resolve' => function (Product $source, $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new FieldGroupConnectionResolver( $source, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
+
+//			// Add the field groups collection to the post type.
+//			register_graphql_field($post_type_object->graphql_single_name, 'groups', [
+//				'type' => $post_type_object->graphql_single_name . 'FieldGroups',
+//				'name' => 'acfGroups',
+//				'resolve' => function ($root) { return $root; }
+//			]);
+		}
 	}
 
 	/**
@@ -395,18 +462,16 @@ class Config {
 	 * @param [type] $type_name Undocumented.
 	 * @param [type] $field_name Undocumented.
 	 * @param [type] $config Undocumented.
-	 *
-	 * @return mixed
+	 * @return void
+	 * @throws Exception
 	 */
 	protected function register_graphql_field( $type_name, $field_name, $config ) {
 		$acf_field = isset( $config['acf_field'] ) ? $config['acf_field'] : null;
 		$acf_type  = isset( $acf_field['type'] ) ? $acf_field['type'] : null;
 
 		if ( empty( $acf_type ) ) {
-			return false;
+			return;
 		}
-
-
 
 		/**
 		 * filter the field config for custom field types
@@ -480,8 +545,6 @@ class Config {
 				$field_config['type'] = 'String';
 				break;
 			case 'range':
-				$field_config['type'] = 'Float';
-				break;
 			case 'number':
 				$field_config['type'] = 'Float';
 				break;
@@ -822,6 +885,12 @@ class Config {
 									return ! empty( $acf_field['name'] ) ? $acf_field['name'] : null;
 								},
 							],
+							'locations' => [
+								'type' => 'Location',
+								'resolve' => function ( $source ) use ( $acf_field ) {
+									return $acf_field['location'];
+								}
+							],
 						],
 					]
 				);
@@ -831,7 +900,6 @@ class Config {
 
 				$field_config['type'] = $field_type_name;
 				break;
-
 			case 'google_map':
 				$field_type_name = 'ACF_GoogleMap';
 				if ( $this->type_registry->get_type( $field_type_name ) == $field_type_name ) {
@@ -981,7 +1049,6 @@ class Config {
 
 				$field_config['type'] = [ 'list_of' => $field_type_name ];
 				break;
-
 			/**
 			 * Flexible content fields should return a Union of the Layouts that can be configured.
 			 *
