@@ -9,6 +9,8 @@ namespace WPGraphQL\ACF;
 
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
+use WP_Post;
+use WPGraphQL;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\DataSource;
 use WPGraphQL\Model\Comment;
@@ -272,7 +274,7 @@ class Config {
 				$field_group['type'] = 'group';
 				$field_group['name'] = $field_name;
 				$config              = [
-					'name'            => $field_name,
+					'name'            => 'fields',
 					'description'     => $field_group['description'],
 					'acf_field'       => $field_group,
 					'acf_field_group' => null,
@@ -284,7 +286,6 @@ class Config {
 				$this->register_graphql_field( $post_type_object->graphql_single_name . 'FieldGroups', $field_name, $config );
 			}
 
-			// var_dump($config);
 			register_graphql_connection([
 				'fromType' => $post_type_object->graphql_single_name,
 				'toType' => $post_type_object->graphql_single_name . 'FieldGroups',
@@ -294,13 +295,6 @@ class Config {
 					return $resolver->get_connection();
 				}
 			]);
-
-//			// Add the field groups collection to the post type.
-//			register_graphql_field($post_type_object->graphql_single_name, 'groups', [
-//				'type' => $post_type_object->graphql_single_name . 'FieldGroups',
-//				'name' => 'acfGroups',
-//				'resolve' => function ($root) { return $root; }
-//			]);
 		}
 	}
 
@@ -313,7 +307,7 @@ class Config {
 	 *
 	 * @return mixed
 	 */
-	protected function get_acf_field_value( $root, $acf_field, $format = false ) {
+	protected function get_acf_field_value( $root, $acf_field ) {
 
 		$value = null;
 		$id = null;
@@ -566,7 +560,6 @@ class Config {
 				];
 				break;
 			case 'relationship':
-
 				if ( isset( $acf_field['post_type'] ) && is_array( $acf_field['post_type'] ) ) {
 
 					$field_type_name = $type_name . '_' . ucfirst( self::camel_case( $acf_field['name'] ) );
@@ -610,7 +603,7 @@ class Config {
 						if ( ! empty( $value ) && is_array( $value ) ) {
 							foreach ( $value as $post_id ) {
 								$post_object = get_post( $post_id );
-								if ( $post_object instanceof \WP_Post ) {
+								if ( $post_object instanceof WP_Post ) {
 									$post_model     = new Post( $post_object );
 									$relationship[] = $post_model;
 								}
@@ -770,7 +763,7 @@ class Config {
 						if ( ! empty( $value ) && is_array( $value ) ) {
 							foreach ( $value as $image ) {
 								$post_object = get_post( (int) $image );
-								if ( $post_object instanceof \WP_Post ) {
+								if ( $post_object instanceof WP_Post ) {
 									$post_model = new Post( $post_object );
 									$gallery[]  = $post_model;
 								}
@@ -860,7 +853,6 @@ class Config {
 					},
 				];
 				break;
-
 			// Accordions are not represented in the GraphQL Schema.
 			case 'accordion':
 				$field_config = null;
@@ -877,12 +869,6 @@ class Config {
 					[
 						'description' => __( 'Field Group', 'wp-graphql-acf' ),
 						'fields'      => [
-							'fieldGroupName' => [
-								'type'    => 'String',
-								'resolve' => function( $source ) use ( $acf_field ) {
-									return ! empty( $acf_field['name'] ) ? $acf_field['name'] : null;
-								},
-							],
 							'locations' => [
 								'type' => 'Location',
 								'resolve' => function ( $source ) use ( $acf_field ) {
@@ -893,8 +879,7 @@ class Config {
 					]
 				);
 
-
-				$this->add_field_group_fields( $acf_field, $field_type_name );
+				$this->add_field_group_fields( $acf_field, $type_name );
 
 				$field_config['type'] = $field_type_name;
 				break;
@@ -1149,17 +1134,18 @@ class Config {
 		$config = array_merge( $config, $field_config );
 
 		$this->registered_field_names[] = $acf_field['name'];
-		return $this->type_registry->register_field( $type_name, $field_name, $config );
+		$this->type_registry->register_field( $type_name, $field_name, $config );
 	}
 
 	/**
 	 * Given a field group array, this adds the fields to the specified Type in the Schema
 	 *
-	 * @param array  $field_group The group to add to the Schema.
-	 * @param string $type_name   The Type name in the GraphQL Schema to add fields to.
-	 * @param bool   $layout      Whether or not these fields are part of a Flex Content layout.
+	 * @param array $field_group The group to add to the Schema.
+	 * @param string $type_name The Type name in the GraphQL Schema to add fields to.
+	 * @param bool $layout Whether or not these fields are part of a Flex Content layout.
+	 * @throws Exception
 	 */
-	protected function add_field_group_fields( $field_group, $type_name, $layout = false ) {
+	protected function add_field_group_fields($field_group, $type_name, $layout = false) {
 
 		/**
 		 * If the field group has the show_in_graphql setting configured, respect it's setting
@@ -1191,6 +1177,23 @@ class Config {
 		 * Stores field keys to prevent duplicate field registration for cloned fields
 		 */
 		$processed_keys = [];
+
+		// Create a collection for all field groups
+		register_graphql_object_type($type_name . 'Fields', [
+			'description' => 'Fields',
+			'fields' => [
+				'fieldName' => [
+					'type' => 'String',
+					'description' => 'Name of this field',
+					'resolve' => function (FieldGroup $root) {
+						return $root->fields['fieldName']();
+					}
+				]
+			],
+			'resolve' => function($root) {
+				return $root;
+			}
+		]);
 
 		/**
 		 * Loop over the fields and register them to the Schema
@@ -1233,23 +1236,36 @@ class Config {
 				'acf_field_group' => $field_group,
 			];
 
-			$this->register_graphql_field( $type_name, $name, $config );
-
+			$this->register_graphql_field( $type_name . 'Fields', $name, $config );
 		}
 
+		// var_dump($type_name);
+
+		register_graphql_connection([
+			'fromType' => $type_name, //@TODO I think this should be $field_group.
+			'fromFieldName' => 'fields22',
+
+			'toType' => $type_name . 'Fields',
+
+			'resolve' => function (FieldGroup $source, $args, AppContext $context, ResolveInfo $info) {
+				$resolver = new FieldGroupConnectionResolver( $source, $args, $context, $info );
+				return $resolver->get_connection();
+			}
+		]);
 	}
 
 	/**
 	 * Add field groups to Taxonomies
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_term_objects() {
 
 		/**
 		 * Get a list of taxonomies that have been registered to show in graphql
 		 */
-		$graphql_taxonomies = \WPGraphQL::get_allowed_taxonomies();
+		$graphql_taxonomies = WPGraphQL::get_allowed_taxonomies();
 
 		/**
 		 * If there are no taxonomies exposed to GraphQL, bail
@@ -1317,6 +1333,7 @@ class Config {
 	 * Add ACF Fields to comments
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_comments() {
 
@@ -1378,6 +1395,7 @@ class Config {
 	 * Add Fields to Menus in the GraphQL Schema
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_menus() {
 
@@ -1440,6 +1458,7 @@ class Config {
 	 * Add ACF Field Groups to Menu Items
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_menu_items() {
 
@@ -1499,6 +1518,7 @@ class Config {
 	 * Add ACF Field Groups to Media Items (attachments)
 	 *
 	 * @return void
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_media_items() {
 
@@ -1628,7 +1648,7 @@ class Config {
 			$post_object = get_post( (int) $group['post_id'] );
 
 			$allowed_post_types = get_post_types( [ 'show_in_graphql' => true ] );
-			if ( ! $post_object instanceof \WP_Post || ! in_array( $post_object->post_type, $allowed_post_types, true ) ) {
+			if ( ! $post_object instanceof WP_Post || ! in_array( $post_object->post_type, $allowed_post_types, true ) ) {
 				continue;
 			}
 
