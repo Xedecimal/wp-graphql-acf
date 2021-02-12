@@ -29,7 +29,7 @@ const WPGRAPHQL_REQUIRED_MIN_VERSION = '0.4.0';
 
 function dd(...$args) {
 	foreach ($args as $arg) {
-		error_log(var_export($arg, true));
+		error_log(print_r($arg, true));
 	}
 }
 
@@ -84,6 +84,8 @@ function show_admin_notice() {
 			<?php
 		}
 	);
+
+	return false;
 }
 
 
@@ -94,7 +96,7 @@ function show_admin_notice() {
  * @return bool
  * @since 0.3
  */
-function can_load_plugin() {
+function can_load_plugin(): bool {
 	// Is ACF active?
 	if ( ! class_exists( 'ACF' ) ) {
 		return false;
