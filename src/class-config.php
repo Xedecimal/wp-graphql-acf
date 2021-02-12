@@ -220,7 +220,7 @@ class Config {
 		$str = ucwords( $str );
 		// Replace spaces
 		$str = str_replace( ' ', '', $str );
-		// Lowecase first letter
+		// Lowercase first letter
 		$str = lcfirst( $str );
 
 		return $str;
@@ -231,6 +231,7 @@ class Config {
 	 *
 	 * This gets the Post Types that are configured to show_in_graphql and iterates
 	 * over them to expose ACF Fields to their Type in the GraphQL Schema.
+	 * @throws Exception
 	 */
 	protected function add_acf_fields_to_post_object_types() {
 
@@ -287,7 +288,7 @@ class Config {
 			 */
 			foreach ( $field_groups as $field_group ) {
 
-				$field_name = isset( $field_group['graphql_field_name'] ) ? $field_group['graphql_field_name'] : Config::camel_case( $field_group['title'] );
+				$field_name = $field_group['graphql_field_name'] ?? Config::camel_case( $field_group['title'] );
 
 				$field_group['type'] = 'group';
 				$field_group['name'] = $field_name;
@@ -566,9 +567,9 @@ class Config {
 			case 'date_time_picker':
 				$field_config = [
 					'type'    => 'String',
-					'resolve' => function( $root, $args, $context, $info ) use ( $acf_field ) {
+					'resolve' => function( $root ) use ( $acf_field ) {
 
-						$value = $this->get_acf_field_value( $root, $acf_field, true );
+						$value = $this->get_acf_field_value( $root, $acf_field );
 
 						if ( ! empty( $value ) && ! empty( $acf_field['return_format'] ) ) {
 							$value = date( $acf_field['return_format'], strtotime( $value ) );
@@ -882,21 +883,6 @@ class Config {
 					break;
 				}
 
-				register_graphql_object_type(
-					$field_type_name,
-					[
-						'description' => __( 'Field Group', 'wp-graphql-acf' ),
-						'fields'      => [
-							'locations' => [
-								'type' => 'Location',
-								'resolve' => function ( $source ) use ( $acf_field ) {
-									return $acf_field['location'];
-								}
-							],
-						],
-					]
-				);
-
 				$this->add_field_group_fields( $acf_field, $type_name );
 
 				$field_config['type'] = $field_type_name;
@@ -1195,23 +1181,6 @@ class Config {
 		 * Stores field keys to prevent duplicate field registration for cloned fields
 		 */
 		$processed_keys = [];
-
-		// Create a collection for all field groups
-		register_graphql_object_type($type_name . 'Fields', [
-			'description' => 'Fields',
-			'fields' => [
-				'fieldName' => [
-					'type' => 'String',
-					'description' => 'Name of this field',
-					'resolve' => function (FieldGroup $root) {
-						return $root->fields['fieldName']();
-					}
-				]
-			],
-			'resolve' => function($root) {
-				return $root;
-			}
-		]);
 
 		/**
 		 * Loop over the fields and register them to the Schema
