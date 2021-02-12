@@ -128,12 +128,18 @@ final class ACF {
 	 * Setup filters
 	 */
 	private function filters() {
-		add_filter('graphql_data_loaders', array(__CLASS__, 'graphql_data_loaders'), 10, 2);
+		add_filter('graphql_data_loaders', [__CLASS__, 'graphql_data_loaders'], 10, 2);
 	}
 
-	public static function graphql_data_loaders($loaders, $context) {
-		$loader = new FieldGroupLoader($context);
-		return array_merge($loaders, [ 'fieldGroups' => &$loader ]);
+	public static function graphql_data_loaders($loaders, $context): array {
+		$fieldGroupLoader = new FieldGroupLoader($context);
+		$fieldLoader = new FieldLoader($context);
+		$locationsLoader = new LocationsLoader($context);
+		return array_merge($loaders, [
+			'fieldGroup' => &$fieldGroupLoader,
+			'field' => &$fieldLoader,
+			'location' => &$locationsLoader,
+		]);
 	}
 
 	/**
