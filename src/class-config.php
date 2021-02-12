@@ -1257,16 +1257,24 @@ class Config {
 			$this->register_graphql_field( $type_name . 'Fields', $name, $config );
 		}
 
-		// var_dump($type_name);
+		register_graphql_connection([
+			'fromType' => $type_name,
+			'fromFieldName' => 'fields',
+
+			'toType' => 'field',
+
+			'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
+				$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
+				return $resolver->get_connection();
+			}
+		]);
 
 		register_graphql_connection([
-			'fromType' => $type_name, //@TODO I think this should be $field_group.
-			'fromFieldName' => 'fields22',
-
-			'toType' => $type_name . 'Fields',
-
-			'resolve' => function (FieldGroup $source, $args, AppContext $context, ResolveInfo $info) {
-				$resolver = new FieldGroupConnectionResolver( $source, $args, $context, $info );
+			'fromType' => $type_name,
+			'fromFieldName' => 'locations',
+			'toType' => 'location',
+			'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
+				$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
 				return $resolver->get_connection();
 			}
 		]);
