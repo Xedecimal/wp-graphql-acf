@@ -2,13 +2,19 @@
 
 namespace WPGraphQL\ACF;
 
+use Exception;
 use WPGraphQL\Data\Loader\AbstractDataLoader;
 
 class FieldGroupLoader extends AbstractDataLoader {
+	/**
+	 * @param mixed $entry
+	 * @param mixed $key
+	 * @return FieldGroup
+	 * @throws Exception
+	 */
 	public function get_model($entry, $key): FieldGroup
 	{
-		$ret = new FieldGroup($entry);
-		return $ret;
+		return new FieldGroup($entry);
 	}
 
 	public function loadKeys( $keys ): array
