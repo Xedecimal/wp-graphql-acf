@@ -254,14 +254,8 @@ class Config {
 					'fieldGroupName' => [
 						'type' => 'String',
 						'description' => 'Name of this field group',
-						'resolve' => function (FieldGroup $root) {
-							return $root->fields['fieldGroupName']();
-						}
-					]
+					],
 				],
-				'resolve' => function($root) {
-					return $root;
-				}
 			]);
 
 			/**
