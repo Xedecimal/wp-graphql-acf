@@ -33,8 +33,7 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 	public function get_query(): WP_Query
 	{
 		$query_args = ['post_type' => 'acf-field-group'];
-		$query = new WP_Query($query_args);
-		return $query;
+		return new WP_Query($query_args);
 	}
 
 	/**
@@ -42,17 +41,16 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 	 *
 	 * @return string
 	 */
-	public function get_loader_name() {
-		return 'fieldGroups';
+	public function get_loader_name(): string {
+		return 'fieldGroup';
 	}
 
 	/**
 	 * @return array
 	 * @throws Exception
 	 */
-	public function get_ids() {
-		$ids = array_map(function ($item) { return $item->ID; }, $this->query->get_posts());
-		return $ids;
+	public function get_ids(): array {
+		return array_map(function ($item) { return $item->ID; }, $this->query->get_posts());
 	}
 
 	/**
@@ -65,7 +63,7 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 	 *
 	 * @return boolean
 	 */
-	public function should_execute() {
+	public function should_execute(): bool {
 		return true;
 	}
 
@@ -81,7 +79,7 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 	 * @since  0.0.5
 	 * @return array
 	 */
-	public function sanitize_input_fields( array $args ) {
+	public function sanitize_input_fields( array $args ): array {
 		$arg_mapping = [
 			'authorEmail'        => 'author_email',
 			'authorIn'           => 'author__in',
@@ -121,7 +119,6 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 		$query_args = apply_filters( 'graphql_map_input_fields_to_wp_comment_query', $query_args, $args, $this->source, $this->args, $this->context, $this->info );
 
 		return ! empty( $query_args ) && is_array( $query_args ) ? $query_args : [];
-
 	}
 
 	/**
@@ -133,8 +130,7 @@ class FieldGroupConnectionResolver extends AbstractConnectionResolver {
 	 *
 	 * @return bool
 	 */
-	public function is_valid_offset( $offset ) {
+	public function is_valid_offset( $offset ): bool {
 		return ! empty( get_comment( $offset ) );
 	}
-
 }
