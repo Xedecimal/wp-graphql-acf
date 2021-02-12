@@ -49,32 +49,6 @@ class Config {
 		 */
 		$this->type_registry = $type_registry;
 
-		$this->type_registry->register_object_type('Location', [
-			'fields' => [
-				'param' => [
-					'type'        => 'String',
-					'description' => __( 'Parameter base of condition', 'wp-graphql-acf' ),
-					'resolve'     => function( $root ) {
-						return $root[0][0]['param'];
-					},
-				],
-				'operator' => [
-					'type'        => 'String',
-					'description' => __( 'comparison between parameter and value', 'wp-graphql-acf' ),
-					'resolve'     => function( $root ) {
-						return $root[0][0]['operator'];
-					},
-				],
-				'value' => [
-					'type'        => 'String',
-					'description' => __( 'operator\'s value', 'wp-graphql-acf' ),
-					'resolve'     => function( $root ) {
-						return $root[0][0]['value'];
-					},
-				],
-			],
-		] );
-
 		/**
 		 * Add ACF Fields to GraphQL Types
 		 */
@@ -87,6 +61,56 @@ class Config {
 		$this->add_acf_fields_to_individual_posts();
 		$this->add_acf_fields_to_users();
 		$this->add_acf_fields_to_options_pages();
+
+
+		// Create a type for all field groups
+		register_graphql_object_type('field', [
+			'description' => 'Fields',
+			'fields' => [
+				'name' => [
+					'type' => 'String',
+					'description' => 'Name of this field',
+					'resolve' => function (Field $root) {
+						return $root->fields['name']();
+					},
+				],
+				'title' => [
+					'type' => 'String',
+					'description' => 'Title of this field',
+					'resolve' => function (Field $root) {
+						return $root->fields['title']();
+					},
+				],
+			],
+		]);
+
+		// Create a type for all locations
+		register_graphql_object_type('location', [
+			'description' => 'Location',
+			'fields' => [
+				'param' => [
+					'type'        => 'String',
+					'description' => __( 'Parameter base of condition', 'wp-graphql-acf' ),
+					'resolve'     => function( $root ) {
+						return $root->fields['param']();
+					},
+				],
+				'operator' => [
+					'type'        => 'String',
+					'description' => __( 'comparison between parameter and value', 'wp-graphql-acf' ),
+					'resolve'     => function( $root ) {
+						return $root->fields['operator']();
+					},
+				],
+				'value' => [
+					'type' => 'String',
+					'description' => __( 'operator\'s value', 'wp-graphql-acf' ),
+					'resolve' => function( $root ) {
+						return $root->fields['value']();
+					},
+				],
+			],
+		]);
 
 		// This filter tells WPGraphQL to resolve revision meta for ACF fields from the revision's meta, instead
 		// of the parent (published post) meta.
