@@ -62,6 +62,19 @@ class Config {
 		$this->add_acf_fields_to_users();
 		$this->add_acf_fields_to_options_pages();
 
+		register_graphql_type('choice', [
+			'description' => 'Field Select Choice',
+			'fields' => [
+				'value' => [
+					'type' => 'String',
+					'description' => 'Value of this choice',
+				],
+				'label' => [
+					'type' => 'String',
+					'description' => 'Label of this choice',
+				],
+			],
+		]);
 
 		// Create a type for all field groups
 		register_graphql_object_type('field', [
@@ -76,8 +89,8 @@ class Config {
 					'description' => 'Title of this field',
 				],
 				'choices' => [
-					'type' => 'List',
-					'description' => 'Title of this field',
+					'type' => [ 'list_of' => 'choice' ],
+					'description' => 'Choices for this field',
 				],
 			],
 		]);

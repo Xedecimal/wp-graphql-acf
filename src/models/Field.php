@@ -81,7 +81,11 @@ class Field extends Model {
 					return $this->data->post_title;
 				},
 				'choices' => function () {
-					return unserialize($this->data->post_content)['choices'];
+					$choices = unserialize($this->data->post_content)['choices'];
+					$ret = $choices ? array_map(function ($value, $label) {
+						return [ 'value' => $value, 'label' => $label];
+					}, array_keys($choices), $choices) : null;
+					return $ret;
 				},
 			];
 		}
