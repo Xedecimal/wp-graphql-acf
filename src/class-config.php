@@ -118,6 +118,8 @@ class Config {
 			],
 		]);
 
+		$this->add_input_types();
+
 		// This filter tells WPGraphQL to resolve revision meta for ACF fields from the revision's meta, instead
 		// of the parent (published post) meta.
 		add_filter( 'graphql_resolve_revision_meta_from_parent', function( $should, $object_id, $meta_key ) {
@@ -158,6 +160,55 @@ class Config {
 
 			return $should;
 		}, 10, 4 );
+	}
+
+	/**
+	 * Add input types for filtering of posts based on ACF types.
+	 */
+	protected function add_input_types() {
+		$groups = acf_get_field_groups();
+
+		foreach ($groups as $group) {
+			$fields = acf_get_fields($group);
+
+			foreach ($fields as $field) {
+				if ($field['type'] === 'select') {
+					// Generate enumeration filter
+
+					$selectValues = [];
+
+					foreach ($field['choices'] as $value => $label) {
+						$selectValues[$value] = [ 'name' => $value, 'value' => $label ];
+					}
+
+					register_graphql_enum_type(
+						$field['name'] . 'Enum',
+						[
+							'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+							'values' => $selectValues,
+						]
+					);
+
+					$fields[$field['name']] = [
+						'type' => [ 'list_of' => $field['name'] . 'Enum' ],
+					];
+				} else {
+					// Unknown type, just use a regular string.
+
+					$fields[$field['name']] = [
+						'type' => 'String',
+					];
+				}
+			}
+
+			register_graphql_input_type(
+				$group['graphql_field_name'] . 'Input',
+				[
+					'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+					'fields' => $fields,
+				]
+			);
+		}
 	}
 
 	/**

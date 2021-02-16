@@ -65,7 +65,7 @@ class Field extends Model {
 		if ( empty( $this->fields ) ) {
 
 			$this->fields = [
-				'id'                 => function() {
+				'id' => function() {
 					return ! empty( $this->data->ID ) ? Relay::toGlobalId( 'comment', $this->data->ID ) : null;
 				},
 				'name' => function() {

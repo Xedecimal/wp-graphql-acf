@@ -130,6 +130,7 @@ final class ACF {
 	private function filters() {
 		add_filter('graphql_data_loaders', [__CLASS__, 'graphql_data_loaders'], 10, 2);
 		add_filter('graphql_allowed_fields_on_restricted_type', [__CLASS__, 'graphql_allowed_fields_on_restricted_type'], 10, 6);
+		add_filter('products_connection_args', [__CLASS__, 'products_connection_args'], 10, 2);
 	}
 
 	public static function graphql_data_loaders($loaders, $context): array {
@@ -141,7 +142,7 @@ final class ACF {
 		]);
 	}
 
-	public static function graphql_allowed_fields_on_restricted_type($allowed_restricted_fields, $model_name, $data, $visibility, $owner, $current_user) {
+	public static function graphql_allowed_fields_on_restricted_type($allowed_restricted_fields, $model_name) {
 		if ( 'FieldGroupObject' === $model_name ) {
 			$allowed_restricted_fields[] = 'fieldGroupName';
 			$allowed_restricted_fields[] = 'locations';
@@ -152,6 +153,24 @@ final class ACF {
 		}
 
 		return $allowed_restricted_fields;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function products_connection_args(): array {
+		$groups = acf_get_field_groups();
+
+		$ret = [];
+
+		foreach ($groups as $group) {
+			$ret[$group['graphql_field_name']] = [
+				'type' => $group['graphql_field_name'] . 'Input',
+				'description' => __('There we go!', 'forgot'),
+			];
+		}
+
+		return $ret;
 	}
 
 	/**
@@ -166,5 +185,4 @@ final class ACF {
 		$acf_settings->init();
 
 	}
-
 }
