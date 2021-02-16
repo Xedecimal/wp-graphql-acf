@@ -84,7 +84,7 @@ class Config {
 
 		// Create a type for all locations
 		register_graphql_object_type('location', [
-			'description' => 'Location',
+			'description' => 'Locations',
 			'fields' => [
 				'param' => [
 					'type'        => 'String',
@@ -291,17 +291,40 @@ class Config {
 				$field_group['type'] = 'group';
 				$field_group['name'] = $field_name;
 				$config              = [
-					'name'            => 'fields',
+					'name'            => $field_name,
 					'description'     => $field_group['description'],
 					'acf_field'       => $field_group,
 					'acf_field_group' => null,
 					'resolve'         => function( $root ) use ( $field_group ) {
-						return isset( $root ) ? $root : null;
+						return $root;
 					}
 				];
 
-				$this->register_graphql_field( $post_type_object->graphql_single_name . 'FieldGroups', $field_name, $config );
+				// Add specific type to post
+				$this->register_graphql_field( $post_type_object->graphql_single_name, $field_name, $config );
 			}
+
+			register_graphql_connection([
+				'fromType' => $post_type_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'fields',
+
+				'toType' => 'field',
+
+				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
+
+			register_graphql_connection([
+				'fromType' => $post_type_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'locations',
+				'toType' => 'location',
+				'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
 
 			register_graphql_connection([
 				'fromType' => $post_type_object->graphql_single_name,
@@ -881,7 +904,23 @@ class Config {
 					break;
 				}
 
-				$this->add_field_group_fields( $acf_field, $type_name );
+				register_graphql_object_type(
+					$field_type_name,
+					[
+						'description' => __( 'Field Group', 'wp-graphql-acf' ),
+						'fields'      => [
+							'fieldGroupName' => [
+								'type'    => 'String',
+								'resolve' => function( $source ) use ( $acf_field ) {
+									return ! empty( $acf_field['name'] ) ? $acf_field['name'] : null;
+								},
+							],
+						],
+					]
+				);
+
+				$this->add_field_group_fields( $acf_field, $field_type_name );
+				// $this->add_field_group_fields( $acf_field, $field_type_name );
 
 				$field_config['type'] = $field_type_name;
 				break;
@@ -1221,30 +1260,9 @@ class Config {
 				'acf_field_group' => $field_group,
 			];
 
-			$this->register_graphql_field( $type_name . 'Fields', $name, $config );
+			$this->register_graphql_field( $type_name, $name, $config );
+			// $this->register_graphql_field( $type_name . 'Fields', $name, $config );
 		}
-
-		register_graphql_connection([
-			'fromType' => $type_name,
-			'fromFieldName' => 'fields',
-
-			'toType' => 'field',
-
-			'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
-				$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
-				return $resolver->get_connection();
-			}
-		]);
-
-		register_graphql_connection([
-			'fromType' => $type_name,
-			'fromFieldName' => 'locations',
-			'toType' => 'location',
-			'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
-				$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
-				return $resolver->get_connection();
-			}
-		]);
 	}
 
 	/**
@@ -1276,9 +1294,9 @@ class Config {
 			 * Get the field groups associated with the taxonomy
 			 */
 			$field_groups = acf_get_field_groups(
-				[
-					'taxonomy' => $taxonomy,
-				]
+//				[
+//					'taxonomy' => $taxonomy,
+//				]
 			);
 
 			/**
@@ -1297,12 +1315,23 @@ class Config {
 				return;
 			}
 
+			// Create a type for all field groups
+			register_graphql_object_type($tax_object->graphql_single_name . 'FieldGroups', [
+				'description' => 'Field Groups',
+				'fields' => [
+					'fieldGroupName' => [
+						'type' => 'String',
+						'description' => 'Name of this field group',
+					],
+				],
+			]);
+
 			/**
 			 * Loop over the field groups for this post type
 			 */
 			foreach ( $field_groups as $field_group ) {
 
-				$field_name = isset( $field_group['graphql_field_name'] ) ? $field_group['graphql_field_name'] : Config::camel_case( $field_group['title'] );
+				$field_name = $field_group['graphql_field_name'] ?? Config::camel_case( $field_group['title'] );
 
 				$field_group['type'] = 'group';
 				$field_group['name'] = $field_name;
@@ -1319,6 +1348,38 @@ class Config {
 
 				$this->register_graphql_field( $tax_object->graphql_single_name, $field_name, $config );
 			}
+
+			register_graphql_connection([
+				'fromType' => $tax_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'fields',
+
+				'toType' => 'field',
+
+				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
+
+			register_graphql_connection([
+				'fromType' => $tax_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'locations',
+				'toType' => 'location',
+				'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
+
+			register_graphql_connection([
+				'fromType' => $tax_object->graphql_single_name,
+				'toType' => $tax_object->graphql_single_name . 'FieldGroups',
+				'fromFieldName' => 'fieldGroups',
+				'resolve' => function (Term $source, $args, AppContext $context, ResolveInfo $info) {
+					$resolver = new FieldGroupConnectionResolver( $source, $args, $context, $info );
+					return $resolver->get_connection();
+				}
+			]);
 		}
 	}
 
