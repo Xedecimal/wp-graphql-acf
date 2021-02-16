@@ -17,7 +17,12 @@ class FieldGroupLoader extends AbstractDataLoader {
 		return new FieldGroup($entry);
 	}
 
-	public function loadKeys( $keys ): array
+	/**
+	 * @param int[] $keys
+	 * @return array
+	 * @throws Exception
+	 */
+	public function loadKeys($keys): array
 	{
 		$loaded = [];
 		foreach ( $keys as $key ) {

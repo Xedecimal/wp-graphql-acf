@@ -1348,9 +1348,7 @@ class Config {
 			register_graphql_connection([
 				'fromType' => $tax_object->graphql_single_name . 'FieldGroups',
 				'fromFieldName' => 'fields',
-
 				'toType' => 'field',
-
 				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
 					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
 					return $resolver->get_connection();
