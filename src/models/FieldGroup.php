@@ -4,6 +4,7 @@ namespace WPGraphQL\ACF;
 
 use Exception;
 use GraphQLRelay\Relay;
+use WP_Post;
 use WPGraphQL\Model\Model;
 use WPGraphQL\WooCommerce\Model\Product;
 
@@ -39,40 +40,21 @@ class FieldGroup extends Model {
 	 *
 	 * @var Product $data
 	 */
-	public $data;
+	protected $data;
+	protected $post_content;
 
 	/**
 	 * Comment constructor.
 	 *
-	 * @param Product $comment The incoming WP_Comment to be modeled
+	 * @param WP_Post $fieldGroup The incoming WP_Comment to be modeled
 	 *
 	 * @throws Exception
 	 */
-	public function __construct( $product ) {
+	public function __construct( $fieldGroup ) {
+		$this->data = $fieldGroup;
+		$this->post_content = unserialize($fieldGroup->post_content);
 
-		$allowed_restricted_fields = [
-			'id',
-			'ID',
-			'commentId',
-			'databaseId',
-			'contentRendered',
-			'date',
-			'dateGmt',
-			'karma',
-			'type',
-			'commentedOnId',
-			'comment_post_ID',
-			'approved',
-			'comment_parent_id',
-			'parentId',
-			'parentDatabaseId',
-			'isRestricted',
-			'userId',
-		];
-
-		$this->data = $product;
-		$owner      = ! empty( $comment->user_id ) ? absint( $comment->user_id ) : null;
-		parent::__construct( 'moderate_comments', $allowed_restricted_fields, $owner );
+		parent::__construct( null, null, null );
 	}
 
 	protected function init() {
@@ -86,12 +68,10 @@ class FieldGroup extends Model {
 					return $this->data->ID;
 				},
 				'fieldGroupName' => function() {
-					$fieldName = unserialize($this->data->post_content)['graphql_field_name'];
-					dd($fieldName);
-					return $fieldName;
+					return $this->post_content['graphql_field_name'];
 				},
 				'locations' => function () {
-					return unserialize($this->data->post_content)['location'][0];
+					return $this->post_content['location'][0];
 				},
 			];
 		}

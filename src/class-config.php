@@ -88,6 +88,10 @@ class Config {
 					'type' => 'String',
 					'description' => 'Title of this field',
 				],
+				'type' => [
+					'type' => 'String',
+					'description' => 'Type of this field',
+				],
 				'choices' => [
 					'type' => [ 'list_of' => 'choice' ],
 					'description' => 'Choices for this field',

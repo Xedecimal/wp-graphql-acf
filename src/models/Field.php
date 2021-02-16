@@ -6,7 +6,6 @@ use Exception;
 use GraphQLRelay\Relay;
 use WP_Post;
 use WPGraphQL\Model\Model;
-use WPGraphQL\WooCommerce\Model\Product;
 
 /**
  * Class Comment - Models data for Comments
@@ -41,25 +40,20 @@ class Field extends Model {
 	 * @var WP_Post $data
 	 */
 	protected $data;
+	protected $post_content;
 
 	/**
 	 * Comment constructor.
 	 *
-	 * @param Product $product The incoming WP_Comment to be modeled
+	 * @param Field $field The incoming field to be modeled
 	 *
 	 * @throws Exception
 	 */
-	public function __construct( $product ) {
-		$allowed_restricted_fields = [
-			'id',
-			'ID',
-			'name',
-			'title',
-		];
+	public function __construct( WP_Post $field ) {
+		$this->data = $field;
+		$this->post_content = unserialize($field->post_content);
 
-		$this->data = $product;
-		$owner      = ! empty( $comment->user_id ) ? absint( $comment->user_id ) : null;
-		parent::__construct( 'moderate_comments', $allowed_restricted_fields, $owner );
+		parent::__construct( null, null, null );
 	}
 
 	/**
@@ -80,8 +74,11 @@ class Field extends Model {
 				'title' => function() {
 					return $this->data->post_title;
 				},
+				'type' => function () {
+					return $this->post_content['type'];
+				},
 				'choices' => function () {
-					$choices = unserialize($this->data->post_content)['choices'];
+					$choices = $this->post_content['choices'];
 					$ret = $choices ? array_map(function ($value, $label) {
 						return [ 'value' => $value, 'label' => $label];
 					}, array_keys($choices), $choices) : null;
