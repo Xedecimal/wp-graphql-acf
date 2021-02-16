@@ -134,11 +134,9 @@ final class ACF {
 	public static function graphql_data_loaders($loaders, $context): array {
 		$fieldGroupLoader = new FieldGroupLoader($context);
 		$fieldLoader = new FieldLoader($context);
-		$locationsLoader = new LocationsLoader($context);
 		return array_merge($loaders, [
 			'fieldGroup' => &$fieldGroupLoader,
 			'field' => &$fieldLoader,
-			'location' => &$locationsLoader,
 		]);
 	}
 

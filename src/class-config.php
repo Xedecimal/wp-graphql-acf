@@ -102,30 +102,21 @@ class Config {
 				'param' => [
 					'type'        => 'String',
 					'description' => __( 'Parameter base of condition', 'wp-graphql-acf' ),
-					'resolve'     => function( $root ) {
-						return $root->fields['param']();
-					},
 				],
 				'operator' => [
 					'type'        => 'String',
 					'description' => __( 'comparison between parameter and value', 'wp-graphql-acf' ),
-					'resolve'     => function( $root ) {
-						return $root->fields['operator']();
-					},
 				],
 				'value' => [
 					'type' => 'String',
 					'description' => __( 'operator\'s value', 'wp-graphql-acf' ),
-					'resolve' => function( $root ) {
-						return $root->fields['value']();
-					},
 				],
 			],
 		]);
 
 		// This filter tells WPGraphQL to resolve revision meta for ACF fields from the revision's meta, instead
 		// of the parent (published post) meta.
-		add_filter( 'graphql_resolve_revision_meta_from_parent', function( $should, $object_id, $meta_key, $single ) {
+		add_filter( 'graphql_resolve_revision_meta_from_parent', function( $should, $object_id, $meta_key ) {
 
 			// Loop through all registered ACF fields that show in GraphQL.
 			if ( is_array( $this->registered_field_names ) && ! empty( $this->registered_field_names ) ) {
@@ -171,7 +162,7 @@ class Config {
 	 *
 	 * @param array $field_group Undocumented.
 	 *
-	 * @return bool
+	 * @return mixed
 	 */
 	protected function should_field_group_show_in_graphql( $field_group ) {
 
@@ -208,20 +199,19 @@ class Config {
 		 * @var Config  $this        The Config for the ACF Plugin
 		 */
 		return apply_filters( 'wpgraphql_acf_should_field_group_show_in_graphql', $show, $field_group, $this );
-
 	}
 
 	/**
 	 * Undocumented function
 	 *
-	 * @todo: This may be a good utility to add to WPGraphQL Core? May even have something already?
-	 *
 	 * @param string $str      Unknown.
 	 * @param array  $no_strip Unknown.
 	 *
 	 * @return mixed|null|string|string[]
+		  *@todo: This may be a good utility to add to WPGraphQL Core? May even have something already?
+	 *
 	 */
-	public static function camel_case( $str, array $no_strip = [] ) {
+	public static function camel_case(string $str, array $no_strip = [] ) {
 		// non-alpha and non-numeric characters become spaces.
 		$str = preg_replace( '/[^a-z0-9' . implode( '', $no_strip ) . ']+/i', ' ', $str );
 		$str = trim( $str );
@@ -325,16 +315,6 @@ class Config {
 
 				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
 					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
-					return $resolver->get_connection();
-				}
-			]);
-
-			register_graphql_connection([
-				'fromType' => $post_type_object->graphql_single_name . 'FieldGroups',
-				'fromFieldName' => 'locations',
-				'toType' => 'location',
-				'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
-					$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
 					return $resolver->get_connection();
 				}
 			]);
@@ -1335,6 +1315,10 @@ class Config {
 						'type' => 'String',
 						'description' => 'Name of this field group',
 					],
+					'locations' => [
+						'type' => [ 'list_of' => 'location' ],
+						'description' => 'List of locations for this field group',
+					]
 				],
 			]);
 
@@ -1369,16 +1353,6 @@ class Config {
 
 				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
 					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
-					return $resolver->get_connection();
-				}
-			]);
-
-			register_graphql_connection([
-				'fromType' => $tax_object->graphql_single_name . 'FieldGroups',
-				'fromFieldName' => 'locations',
-				'toType' => 'location',
-				'resolve' => function (FieldGroup $parent, array $args, AppContext $context, ResolveInfo $info) {
-					$resolver = new LocationConnectionResolver( $parent, $args, $context, $info );
 					return $resolver->get_connection();
 				}
 			]);
@@ -1805,7 +1779,7 @@ class Config {
 		/**
 		 * Get a list of post types that have been registered to show in graphql
 		 */
-		$graphql_options_pages = acf_get_options_pages();
+//		$graphql_options_pages = acf_get_options_pages();
 
 		/**
 		 * If there are no post types exposed to GraphQL, bail
