@@ -1196,7 +1196,7 @@ class Config {
 			$explicit_name   = ! empty( $acf_field['graphql_field_name'] ) ? $acf_field['graphql_field_name'] : null;
 			$name            = empty( $explicit_name ) && ! empty( $acf_field['name'] ) ? self::camel_case( $acf_field['name'] ) : $explicit_name;
 			$show_in_graphql = isset( $acf_field['show_in_graphql'] ) ? (bool) $acf_field['show_in_graphql'] : true;
-			$description     = isset( $acf_field['instructions'] ) ? $acf_field['instructions'] : __( 'ACF Field added to the Schema by WPGraphQL ACF' );
+			$description     = $acf_field['instructions'] ?? __( 'ACF Field added to the Schema by WPGraphQL ACF' );
 
 			/**
 			 * If the field is missing a name or a type,
