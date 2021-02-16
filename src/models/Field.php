@@ -2,9 +2,11 @@
 
 namespace WPGraphQL\ACF;
 
+use Exception;
 use GraphQLRelay\Relay;
 use WP_Post;
 use WPGraphQL\Model\Model;
+use WPGraphQL\WooCommerce\Model\Product;
 
 /**
  * Class Comment - Models data for Comments
@@ -32,23 +34,22 @@ use WPGraphQL\Model\Model;
  * @package WPGraphQL\Model
  */
 class Field extends Model {
-//
+
 	/**
 	 * Stores the incoming WP_Comment object to be modeled
 	 *
 	 * @var WP_Post $data
 	 */
 	protected $data;
-//
-//	/**
-//	 * Comment constructor.
-//	 *
-//	 * @param \WP_Comment $comment The incoming WP_Comment to be modeled
-//	 *
-//	 * @throws Exception
-//	 */
-	public function __construct( $product ) {
 
+	/**
+	 * Comment constructor.
+	 *
+	 * @param Product $product The incoming WP_Comment to be modeled
+	 *
+	 * @throws Exception
+	 */
+	public function __construct( $product ) {
 		$allowed_restricted_fields = [
 			'id',
 			'ID',
@@ -59,47 +60,13 @@ class Field extends Model {
 		$this->data = $product;
 		$owner      = ! empty( $comment->user_id ) ? absint( $comment->user_id ) : null;
 		parent::__construct( 'moderate_comments', $allowed_restricted_fields, $owner );
-//
 	}
-//
-//	/**
-//	 * Method for determining if the data should be considered private or not
-//	 *
-//	 * @return bool
-//	 * @throws Exception
-//	 */
-//	protected function is_private() {
-//
-//		if ( empty( $this->data->comment_post_ID ) ) {
-//			return true;
-//		}
-//
-//		$commented_on = get_post( (int) $this->data->comment_post_ID );
-//
-//		if ( empty( $commented_on ) ) {
-//			return true;
-//		}
-//
-//		// A comment is considered private if it is attached to a private post.
-//		if ( empty( $commented_on ) || true === ( new Post( $commented_on ) )->is_private() ) {
-//			return true;
-//		}
-//
-//		// NOTE: Do a non-strict check here, as the return is a `1` or `0`.
-//		// phpcs:disable WordPress.PHP.StrictComparisons.LooseComparison
-//		if ( true != $this->data->comment_approved && ! current_user_can( 'moderate_comments' ) ) {
-//			return true;
-//		}
-//
-//		return false;
-//
-//	}
-//
-//	/**
-//	 * Initializes the object
-//	 *
-//	 * @return void
-//	 */
+
+	/**
+	 * Initializes the object
+	 *
+	 * @return void
+	 */
 	protected function init() {
 		if ( empty( $this->fields ) ) {
 
@@ -108,10 +75,13 @@ class Field extends Model {
 					return ! empty( $this->data->ID ) ? Relay::toGlobalId( 'comment', $this->data->ID ) : null;
 				},
 				'name' => function() {
-					return $this->data->post_name;
+					return Config::camel_case($this->data->post_title);
 				},
 				'title' => function() {
 					return $this->data->post_title;
+				},
+				'choices' => function () {
+					return unserialize($this->data->post_content)['choices'];
 				},
 			];
 		}
