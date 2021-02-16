@@ -32,7 +32,7 @@ class FieldConnectionResolver extends AbstractConnectionResolver {
 	 */
 	public function get_query(): WP_Query
 	{
-		$query_args = ['post_type' => 'acf-field'];
+		$query_args = ['post_type' => 'acf-field', 'post_parent' => $this->source->fields['ID']()];
 		return new WP_Query($query_args);
 	}
 
