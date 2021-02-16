@@ -1245,7 +1245,6 @@ class Config {
 				empty( $name ) ||
 				true != $show_in_graphql
 			) {
-
 				/**
 				 * Uncomment line below to determine what fields are not going to be output
 				 * in the Schema.
@@ -1922,5 +1921,4 @@ class Config {
 			}
 		}
 	}
-
 }
