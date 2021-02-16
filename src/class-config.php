@@ -70,16 +70,14 @@ class Config {
 				'name' => [
 					'type' => 'String',
 					'description' => 'Name of this field',
-					'resolve' => function (Field $root) {
-						return $root->fields['name']();
-					},
 				],
 				'title' => [
 					'type' => 'String',
 					'description' => 'Title of this field',
-					'resolve' => function (Field $root) {
-						return $root->fields['title']();
-					},
+				],
+				'choices' => [
+					'type' => 'List',
+					'description' => 'Title of this field',
 				],
 			],
 		]);
