@@ -129,6 +129,7 @@ final class ACF {
 	 */
 	private function filters() {
 		add_filter('graphql_data_loaders', [__CLASS__, 'graphql_data_loaders'], 10, 2);
+		add_filter('graphql_allowed_fields_on_restricted_type', [__CLASS__, 'graphql_allowed_fields_on_restricted_type'], 10, 6);
 	}
 
 	public static function graphql_data_loaders($loaders, $context): array {
@@ -138,6 +139,19 @@ final class ACF {
 			'fieldGroup' => &$fieldGroupLoader,
 			'field' => &$fieldLoader,
 		]);
+	}
+
+	public static function graphql_allowed_fields_on_restricted_type($allowed_restricted_fields, $model_name, $data, $visibility, $owner, $current_user) {
+		if ( 'FieldGroupObject' === $model_name ) {
+			$allowed_restricted_fields[] = 'fieldGroupName';
+			$allowed_restricted_fields[] = 'locations';
+		}
+
+		if ( 'FieldObject' === $model_name ) {
+			$allowed_restricted_fields[] = 'choices';
+		}
+
+		return $allowed_restricted_fields;
 	}
 
 	/**
