@@ -168,6 +168,8 @@ class Config {
 	protected function add_input_types() {
 		$groups = acf_get_field_groups();
 
+		$groupInputs = [];
+
 		foreach ($groups as $group) {
 			$fields = acf_get_fields($group);
 
@@ -208,7 +210,20 @@ class Config {
 					'fields' => $fields,
 				]
 			);
+
+			$groupInputs[$group['graphql_field_name']] = [
+				'name' => $group['graphql_field_name'],
+				'type' => $group['graphql_field_name'] . 'Input',
+			];
 		}
+
+		register_graphql_input_type(
+			'FieldGroupInput',
+			[
+				'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+				'fields' => $groupInputs,
+			]
+		);
 	}
 
 	/**

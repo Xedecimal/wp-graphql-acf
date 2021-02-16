@@ -159,7 +159,8 @@ final class ACF {
 	 * @return array
 	 */
 	public static function products_connection_args(): array {
-		$groups = acf_get_field_groups();
+		return [ 'fieldGroups' => [ 'type' => 'FieldGroupInput', 'name' => 'fieldGroups' ] ];
+	}
 
 		$ret = [];
 
