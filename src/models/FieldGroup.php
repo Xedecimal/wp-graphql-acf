@@ -117,8 +117,11 @@ class FieldGroup extends Model {
 		if ( empty( $this->fields ) ) {
 
 			$this->fields = [
-				'id'                 => function() {
-					return ! empty( $this->data->ID ) ? Relay::toGlobalId( 'comment', $this->data->ID ) : null;
+				'id' => function() {
+					return ! empty( $this->data->ID ) ? Relay::toGlobalId( 'fieldGroup', $this->data->ID ) : null;
+				},
+				'ID' => function () {
+					return $this->data->ID;
 				},
 				'fieldGroupName' => function() {
 					return unserialize($this->data->post_content)['graphql_field_name'];
