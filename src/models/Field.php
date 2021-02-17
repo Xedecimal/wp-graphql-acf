@@ -84,6 +84,8 @@ class Field extends Model {
 					}, array_keys($choices), $choices) : null;
 					return $ret;
 				},
+				'min' => function () { return $this->post_content['min']; },
+				'max' => function () { return $this->post_content['max']; },
 			];
 		}
 	}
