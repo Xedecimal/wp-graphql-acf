@@ -10,6 +10,7 @@ namespace WPGraphQL\ACF;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use WP_Post;
+use WP_Query;
 use WPGraphQL;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\DataSource;
@@ -96,6 +97,14 @@ class Config {
 					'type' => [ 'list_of' => 'choice' ],
 					'description' => 'Choices for this field',
 				],
+				'min' => [
+					'type' => 'number',
+					'description' => 'Minimum value for this numeric field',
+				],
+				'max' => [
+					'type' => 'number',
+					'description' => 'Maximum value for this numeric field',
+				],
 			],
 		]);
 
@@ -116,6 +125,20 @@ class Config {
 					'description' => __( 'operator\'s value', 'wp-graphql-acf' ),
 				],
 			],
+		]);
+
+		register_graphql_input_type('numeric', [
+			'description' => __('Numeric Input', 'wp-graphql-acf'),
+			'fields' => [
+				'lt'    => [
+					'type'        => 'Int',
+					'description' => __( 'Value is less than this', 'wp-graphql-acf' ),
+				],
+				'gt'    => [
+					'type'        => 'Int',
+					'description' => __( 'Value is more than this', 'wp-graphql-acf' ),
+				],
+			]
 		]);
 
 		$this->add_input_types();
@@ -186,7 +209,7 @@ class Config {
 					register_graphql_enum_type(
 						$field['name'] . 'Enum',
 						[
-							'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+							'description' => __('Filter by select options', 'wp-graphql-acf'),
 							'values' => $selectValues,
 						]
 					);
@@ -194,11 +217,18 @@ class Config {
 					$fields[$field['name']] = [
 						'type' => [ 'list_of' => $field['name'] . 'Enum' ],
 					];
+				} else if ($field['type'] === 'number') {
+					// Numeric entry, add some range filters
+					$fields[$field['name']] = [
+						'type' => 'numeric',
+						'description' => __('Numeric range input', 'wp-graphql-acf')
+					];
 				} else {
 					// Unknown type, just use a regular string.
 
 					$fields[$field['name']] = [
 						'type' => 'String',
+						'description' => 'Filter by specific value string'
 					];
 				}
 			}
@@ -206,7 +236,7 @@ class Config {
 			register_graphql_input_type(
 				$group['graphql_field_name'] . 'Input',
 				[
-					'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+					'description' => __('Filter by fields', 'wp-graphql-acf'),
 					'fields' => $fields,
 				]
 			);
@@ -220,7 +250,7 @@ class Config {
 		register_graphql_input_type(
 			'FieldGroupInput',
 			[
-				'description' => __('Options for ordering the connection', 'wp-graphql-woocommerce'),
+				'description' => __('Arguments for all field groups in this connection', 'wp-graphql-acf'),
 				'fields' => $groupInputs,
 			]
 		);
@@ -274,12 +304,12 @@ class Config {
 	/**
 	 * Undocumented function
 	 *
+	 * @todo: This may be a good utility to add to WPGraphQL Core? May even have something already?
+	 *
 	 * @param string $str      Unknown.
 	 * @param array  $no_strip Unknown.
 	 *
 	 * @return mixed|null|string|string[]
-		  *@todo: This may be a good utility to add to WPGraphQL Core? May even have something already?
-	 *
 	 */
 	public static function camel_case(string $str, array $no_strip = [] ) {
 		// non-alpha and non-numeric characters become spaces.
@@ -380,9 +410,7 @@ class Config {
 			register_graphql_connection([
 				'fromType' => $post_type_object->graphql_single_name . 'FieldGroups',
 				'fromFieldName' => 'fields',
-
 				'toType' => 'field',
-
 				'resolve' => function (FieldGroup $parent, $args, AppContext $context, ResolveInfo $info) {
 					$resolver = new FieldConnectionResolver( $parent, $args, $context, $info );
 					return $resolver->get_connection();
@@ -983,7 +1011,6 @@ class Config {
 				);
 
 				$this->add_field_group_fields( $acf_field, $field_type_name );
-				// $this->add_field_group_fields( $acf_field, $field_type_name );
 
 				$field_config['type'] = $field_type_name;
 				break;
@@ -1323,7 +1350,6 @@ class Config {
 			];
 
 			$this->register_graphql_field( $type_name, $name, $config );
-			// $this->register_graphql_field( $type_name . 'Fields', $name, $config );
 		}
 	}
 
@@ -1847,7 +1873,7 @@ class Config {
 		/**
 		 * Get a list of post types that have been registered to show in graphql
 		 */
-//		$graphql_options_pages = acf_get_options_pages();
+		// $graphql_options_pages = acf_get_options_pages();
 
 		/**
 		 * If there are no post types exposed to GraphQL, bail
