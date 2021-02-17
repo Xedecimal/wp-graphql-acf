@@ -131,6 +131,7 @@ final class ACF {
 		add_filter('graphql_data_loaders', [__CLASS__, 'graphql_data_loaders'], 10, 2);
 		add_filter('graphql_allowed_fields_on_restricted_type', [__CLASS__, 'graphql_allowed_fields_on_restricted_type'], 10, 6);
 		add_filter('products_connection_args', [__CLASS__, 'products_connection_args'], 10, 2);
+		add_filter('graphql_woocommerce_products_connection_args', [__CLASS__, 'graphql_product_connection_query_args'], 10, 2);
 	}
 
 	public static function graphql_data_loaders($loaders, $context): array {
@@ -162,16 +163,35 @@ final class ACF {
 		return [ 'fieldGroups' => [ 'type' => 'FieldGroupInput', 'name' => 'fieldGroups' ] ];
 	}
 
-		$ret = [];
-
-		foreach ($groups as $group) {
-			$ret[$group['graphql_field_name']] = [
-				'type' => $group['graphql_field_name'] . 'Input',
-				'description' => __('There we go!', 'forgot'),
-			];
+	public static function graphql_product_connection_query_args($args) {
+		if (empty($args['graphql_args'])
+			|| empty($args['graphql_args']['where'])
+			|| empty($args['graphql_args']['where']['fieldGroups'])) {
+			return $args;
 		}
 
-		return $ret;
+		foreach ($args['graphql_args']['where']['fieldGroups'] as $fields) {
+			foreach ($fields as $fieldName => $field) {
+				if ($field['lt'] && $field['gt']) {
+					// Numeric Range
+					$args['meta_query'][] = [
+						'key' => $fieldName,
+						'value' => array_values($field),
+						'type' => 'numeric',
+						'compare' => 'BETWEEN',
+					];
+				} else {
+					// Enum
+					$args['meta_query'][] = [
+						'key' => $fieldName,
+						'value' => array_values($field),
+						'compare' => 'IN',
+					];
+				}
+			}
+		}
+
+		return $args;
 	}
 
 	/**
