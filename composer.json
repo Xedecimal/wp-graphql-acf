@@ -26,6 +26,8 @@
     "wpunit-test": "vendor/bin/codecept run wpunit"
   },
   "require-dev": {
+    "lucatume/wp-browser": "^2.2.",
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
     "wp-coding-standards/wpcs": "^2.1",
     "phpcompatibility/phpcompatibility-wp": "^2.0",
     "vimeo/psalm": "^4.4"
